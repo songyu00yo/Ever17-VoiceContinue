@@ -1,80 +1,82 @@
-# Technical notes
+# 技术说明
 
-## Target behavior
+[English](TECHNICAL.en.md)
 
-The original engine couples text advance with fading/stopping the current character voice. Voice Continue separates those two events:
+## 目标行为
+
+原版引擎把文本推进和当前角色语音的淡出、停止绑定在一起。Voice Continue 把这两个事件分开：
 
 ```text
-advance + no new voice  -> keep current voice
-advance + new voice     -> stop current voice, play new voice
+推进文本 + 下一句无语音  -> 保留当前语音
+推进文本 + 下一句有语音  -> 停止当前语音，播放新语音
 ```
 
-A blanket hook of `IDirectSoundBuffer::Stop` is therefore wrong: it also suppresses the legitimate stop that occurs when a new voice replaces the previous one.
+因此，直接 Hook `IDirectSoundBuffer::Stop` 不合适。新语音替换旧语音时，游戏本来就需要执行一次正常的停止操作。
 
-## Two patch sites
+## 两个补丁位置
 
-In the analyzed 2002 PC KID engine, two code paths enter the voice fade-out logic when text/input advances.
+在已分析的 2002 PC KID 引擎中，有两条代码路径会在文本或输入推进时进入语音淡出逻辑。
 
-Baseline locations:
+基准版本中的虚拟地址：
 
 ```text
 VA 0x00413E7D
 VA 0x0041D43C
 ```
 
-The original private build patched those exact locations with:
+最初的内部测试版直接在这两个位置写入：
 
 ```text
 E9 40 00 00 00
 E9 3A 00 00 00
 ```
 
-The public build does not rely on those fixed VAs or file offsets.
+公开版不依赖这些固定虚拟地址或文件偏移。
 
-## Signature scanning
+## 特征扫描
 
-The patcher parses the PE section table and scans only sections marked `IMAGE_SCN_MEM_EXECUTE`.
+补丁程序解析 PE section table，只扫描带 `IMAGE_SCN_MEM_EXECUTE` 标记的 section。
 
-Absolute global addresses and `CALL rel32` operands are wildcarded. Fixed opcodes, constants, and surrounding control-flow structure provide specificity.
+绝对全局地址和 `CALL rel32` 操作数使用通配匹配。固定 opcode、常量和周围的控制流结构用于限定目标代码。
 
-### Safety relation
+### 地址关系校验
 
-The original prefix is:
+原始代码前缀为：
 
 ```text
 A1 xx xx xx xx    ; mov eax, [voice_timing_global]
 ```
 
-Later in the same block:
+同一代码块稍后包含：
 
 ```text
 0F AF 05 yy yy yy yy
 ```
 
-For the baseline engine:
+基准引擎满足：
 
 ```text
 xx_addr == yy_addr + 0x0C
 ```
 
-The scanner requires this relationship. The same relationship is used to reconstruct the original five bytes during `/restore`.
+扫描器要求这个关系成立。`/restore` 也使用同一关系重建原始的 5 字节指令。
 
-## Compatibility model
+## 兼容性模型
 
-Expected to survive:
+下列变化通常不会破坏匹配：
 
-- translation/resource/string changes;
-- EXE size or PE timestamp changes;
-- section raw-offset changes;
-- moved code with unchanged instruction layout;
-- changed image/global absolute addresses;
-- changed `CALL rel32` operands.
+- 汉化文本、字符串和 PE 资源变化；
+- EXE 大小或 PE 时间戳变化；
+- section raw offset 变化；
+- 指令布局不变时的代码整体移动；
+- image/global 绝对地址变化；
+- `CALL rel32` 操作数变化。
 
-The patcher intentionally refuses to modify a file when:
+出现下列情况时，补丁程序拒绝修改：
 
-- either signature is missing;
-- either signature matches more than once;
-- only one patch site is already modified;
-- the low-level voice-control routine has been recompiled/restructured enough that equivalence cannot be proven.
+- 任意一条 signature 缺失；
+- 任意一条 signature 命中多次；
+- 只有一个补丁位置处于已修改状态；
+- 底层语音控制代码已经重编译或重构，无法证明它与已知结构等价。
 
-Binary patching should fail closed, not guess.
+二进制补丁无法确认目标时，应当停止，而不是猜测偏移。
