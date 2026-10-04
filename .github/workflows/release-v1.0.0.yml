@@ -26,59 +26,24 @@ jobs:
         shell: cmd
         run: |
           if not exist build mkdir build
-          cl /nologo /O2 /W4 /DUNICODE /D_UNICODE /MT src\\patcher.c /Fe:build\\Ever17_VoiceContinue.exe user32.lib kernel32.lib
+          cl /nologo /O2 /W4 /DUNICODE /D_UNICODE /MT src\patcher.c /Fe:build\Ever17_VoiceContinue.exe user32.lib kernel32.lib
 
       - name: Write SHA-256
         shell: powershell
         run: |
-          $hash = (Get-FileHash build\\Ever17_VoiceContinue.exe -Algorithm SHA256).Hash.ToLower()
-          "$hash  Ever17_VoiceContinue.exe" | Set-Content build\\Ever17_VoiceContinue.exe.sha256 -Encoding ascii
-          Get-Content build\\Ever17_VoiceContinue.exe.sha256
+          $hash = (Get-FileHash build\Ever17_VoiceContinue.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  Ever17_VoiceContinue.exe" | Set-Content build\Ever17_VoiceContinue.exe.sha256 -Encoding ascii
+          Get-Content build\Ever17_VoiceContinue.exe.sha256
 
-      - name: Write release notes
-        shell: powershell
-        run: |
-          @'
-          ## v1.0.0
-
-          ### 中文
-
-          首个公开版本。
-
-          - 为 2002 PC 版 Ever17 添加 Voice Continue。
-          - 翻到无新语音的文本时，当前语音继续播放。
-          - 新语音出现时，旧语音立即停止，新语音立即播放。
-          - 保持原速，不排队，不重叠。
-          - 使用 PE 可执行节机器码特征扫描，不依赖固定 EXE 偏移。
-          - 写入前自动备份，支持 /restore。
-          - 遇到未知或不唯一的代码布局时拒绝修改。
-
-          下载 `Ever17_VoiceContinue.exe`，放到游戏 EXE 同目录后运行。
-
-          ### English
-
-          First public release.
-
-          - Adds Voice Continue to the 2002 PC release of Ever17.
-          - Current voice keeps playing when the next line has no new voice.
-          - A new voice immediately replaces the previous voice.
-          - Original playback speed, with no queueing or overlap.
-          - Uses PE executable-section machine-code signatures instead of fixed EXE offsets.
-          - Creates a backup before writing and supports /restore.
-          - Refuses to patch unknown or ambiguous code layouts.
-
-          Download `Ever17_VoiceContinue.exe`, place it next to the game executable, and run it.
-          '@ | Set-Content release-notes.md -Encoding utf8
-
-      - name: Create release
+      - name: Create or update v1.0.0 release
         shell: powershell
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v1.0.0 `
-            build\\Ever17_VoiceContinue.exe `
-            build\\Ever17_VoiceContinue.exe.sha256 `
-            --repo "${{ github.repository }}" `
-            --title "v1.0.0" `
-            --notes-file release-notes.md `
-            --target "${{ github.sha }}"
+          gh release view v1.0.0 --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit v1.0.0 --repo "${{ github.repository }}" --title "v1.0.0" --notes-file RELEASE_NOTES.md
+            gh release upload v1.0.0 build\Ever17_VoiceContinue.exe build\Ever17_VoiceContinue.exe.sha256 --repo "${{ github.repository }}" --clobber
+          } else {
+            gh release create v1.0.0 build\Ever17_VoiceContinue.exe build\Ever17_VoiceContinue.exe.sha256 --repo "${{ github.repository }}" --title "v1.0.0" --notes-file RELEASE_NOTES.md --target "${{ github.sha }}"
+          }
