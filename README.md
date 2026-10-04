@@ -9,6 +9,11 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![platform](https://img.shields.io/badge/platform-Windows%20x86-lightgrey)
 
+![C](https://img.shields.io/badge/language-C-A8B9CC?logo=c&logoColor=black)
+![MSVC](https://img.shields.io/badge/toolchain-MSVC-5C2D91?logo=visualstudio&logoColor=white)
+![Win32](https://img.shields.io/badge/API-Win32-0078D6)
+![PE](https://img.shields.io/badge/target-PE%20patcher-grey)
+
 ## 下载
 
 稳定版直接从 Releases 下载：
