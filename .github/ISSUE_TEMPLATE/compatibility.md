@@ -1,21 +1,21 @@
 ---
-name: Compatibility report
-about: Report a supported/unsupported Ever17 2002 PC executable
+name: 兼容性报告
+about: 报告 Ever17 2002 PC EXE 的兼容或不兼容情况
 title: "[compat] "
 labels: ""
 ---
 
-**Do not upload the full game or copyrighted game files.**
+**不要上传完整游戏、游戏 EXE 或其他受版权保护的游戏文件。**
 
-- Language / translation patch:
-- Distributor / package name:
-- Windows version:
-- EXE filename:
-- EXE SHA-256:
-- Result:
-  - [ ] Patch installed and works
-  - [ ] "No safely identifiable EXE"
-  - [ ] Partial/non-standard state
-  - [ ] Other
-- Local audio proxy DLLs present (`dsound.dll` / `MMDevAPI.dll`):
-- Notes:
+- 游戏版本 / 汉化组：
+- 整合包或来源名称：
+- Windows 版本：
+- EXE 文件名：
+- EXE SHA-256：
+- 结果：
+  - [ ] 补丁安装成功，功能正常
+  - [ ] 提示“没有找到可安全识别的 EXE”
+  - [ ] 提示部分修改或非标准状态
+  - [ ] 其他
+- 游戏目录是否存在音频代理 DLL（`dsound.dll` / `MMDevAPI.dll`）：
+- 补充说明：
