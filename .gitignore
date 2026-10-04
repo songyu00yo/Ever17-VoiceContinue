@@ -1,0 +1,6 @@
+build/
+*.obj
+*.res
+*.pdb
+*.bak
+*.voicecontinue.bak
